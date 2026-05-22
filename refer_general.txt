@@ -1,0 +1,8 @@
+cd /Users/nanda/Documents/PersonalProjects/SupplyChainLakehouse
+python3 -m venv venv
+
+source venv/bin/activate
+
+pip install pyspark
+
+python src/bronze/ingest_supply_chain.py
