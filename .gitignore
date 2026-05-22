@@ -6,10 +6,10 @@ __pycache__/
 .env
 
 # Data files
-data/
-bronze/
-silver/
-gold/
+/data/
+/bronze/
+/silver/
+/gold/
 
 # Spark
 derby.log
@@ -23,5 +23,5 @@ spark-warehouse/
 .DS_Store
 
 #Files not required
-refer_general.txt
+refer.txt
 reference_kaggle.txt
