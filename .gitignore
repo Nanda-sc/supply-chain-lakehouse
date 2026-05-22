@@ -21,3 +21,7 @@ spark-warehouse/
 
 # macOS
 .DS_Store
+
+#Files not required
+refer_general.txt
+reference_kaggle.txt
