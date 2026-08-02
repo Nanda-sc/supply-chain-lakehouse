@@ -10,5 +10,7 @@ GOLD_PATH                    = os.path.join(BASE_DIR, "gold")
 GOLD_DELIVERY_PERFORMANCE    = os.path.join(BASE_DIR, "gold", "delivery_performance")
 GOLD_SUPPLIER_PERFORMANCE    = os.path.join(BASE_DIR, "gold", "supplier_performance")
 GOLD_SHIPPING_ANALYSIS       = os.path.join(BASE_DIR, "gold", "shipping_analysis")
+GOLD_FORECAST_RESULTS        = os.path.join(BASE_DIR, "gold", "forecast_results")
+GOLD_FORECAST_ACCURACY       = os.path.join(BASE_DIR, "gold", "forecast_accuracy")
 
 SOURCE_FILE_NAME = "DataCoSupplyChainDataset.csv"

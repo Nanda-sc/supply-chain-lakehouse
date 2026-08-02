@@ -45,8 +45,14 @@ with DAG(
         bash_command=f"cd {PROJECT_DIR} && python src/gold/shipping_analysis.py",
     )
 
+    gold_forecast_accuracy = BashOperator(
+        task_id="gold_forecast_accuracy",
+        bash_command=f"cd {PROJECT_DIR} && python src/gold/forecast_accuracy.py",
+    )
+
     bronze_ingest >> silver_transform >> [
         gold_delivery_performance,
         gold_supplier_performance,
         gold_shipping_analysis,
+        gold_forecast_accuracy,
     ]
