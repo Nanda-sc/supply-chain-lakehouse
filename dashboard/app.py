@@ -14,8 +14,6 @@ from src.query.duck_db import (
     get_delivery_performance,
     get_supplier_performance,
     get_shipping_analysis,
-    get_forecast_results,
-    get_forecast_accuracy_summary,
 )
 
 st.set_page_config(
@@ -192,86 +190,3 @@ with tab2:
 
 with tab3:
     st.dataframe(shipping_full, use_container_width=True)
-
-st.divider()
-
-# ── Demand Forecasting ────────────────────────────────────────────────────────
-st.subheader("Demand Forecasting")
-st.caption(
-    "Moving Average (4w / 8w / 12w) vs Prophet — trained on 2015–2016, tested on 2017."
-)
-
-# Model accuracy summary
-accuracy_summary = get_forecast_accuracy_summary()
-
-col1, col2, col3, col4 = st.columns(4)
-models_ordered = accuracy_summary.sort_values("avg_wmape")
-best = models_ordered.iloc[0]
-col1.metric("Best Model",       best["model"])
-col2.metric("Best WMAPE",       f"{best['avg_wmape']:.1f}%")
-col3.metric("Best RMSE",        f"{best['avg_rmse']:.1f}")
-col4.metric("Test Weeks",       f"{int(models_ordered['total_test_weeks'].max()):,}")
-
-st.subheader("Model Accuracy Comparison (Test Set)")
-st.dataframe(
-    accuracy_summary.rename(columns={
-        "model": "Model", "avg_rmse": "Avg RMSE", "avg_mae": "Avg MAE",
-        "avg_wmape": "Avg WMAPE (%)", "avg_bias": "Avg Bias",
-        "total_test_weeks": "Test Weeks",
-    }),
-    use_container_width=True,
-    hide_index=True,
-)
-
-# Forecast vs Actual chart
-st.subheader("Forecast vs Actual — Weekly Demand")
-
-all_forecasts = get_forecast_results()
-markets    = sorted(all_forecasts["market"].unique())
-sel_market = st.selectbox("Market", markets, key="fc_market")
-
-categories = sorted(
-    all_forecasts.loc[all_forecasts["market"] == sel_market, "category_name"].unique()
-)
-sel_category = st.selectbox("Category", categories, key="fc_category")
-
-fc_filtered = all_forecasts[
-    (all_forecasts["market"] == sel_market) &
-    (all_forecasts["category_name"] == sel_category)
-].sort_values("week")
-
-fig = go.Figure()
-fig.add_trace(go.Scatter(
-    x=fc_filtered["week"], y=fc_filtered["actual_quantity"],
-    mode="lines", name="Actual", line=dict(color="steelblue", width=2),
-))
-for col_name, label, colour in [
-    ("ma_4w",  "MA 4w",  "orange"),
-    ("ma_8w",  "MA 8w",  "green"),
-    ("ma_12w", "MA 12w", "purple"),
-    ("prophet_forecast", "Prophet", "crimson"),
-]:
-    if col_name in fc_filtered.columns:
-        fig.add_trace(go.Scatter(
-            x=fc_filtered["week"], y=fc_filtered[col_name],
-            mode="lines", name=label,
-            line=dict(dash="dash", color=colour, width=1.5),
-        ))
-
-# Shade train/test regions
-if "split" in fc_filtered.columns and len(fc_filtered) > 0:
-    test_start = fc_filtered.loc[fc_filtered["split"] == "test", "week"].min()
-    if test_start is not None and not fc_filtered.empty:
-        fig.add_vrect(
-            x0=test_start, x1=fc_filtered["week"].max(),
-            fillcolor="lightgrey", opacity=0.2, layer="below",
-            annotation_text="Test period", annotation_position="top left",
-        )
-
-fig.update_layout(
-    title=f"{sel_market} — {sel_category}",
-    xaxis_title="Week",
-    yaxis_title="Units",
-    legend=dict(orientation="h", yanchor="bottom", y=1.02),
-)
-st.plotly_chart(fig, use_container_width=True)

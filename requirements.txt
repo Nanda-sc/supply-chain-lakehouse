@@ -3,4 +3,3 @@ pytest==9.0.3
 duckdb
 streamlit
 plotly
-prophet

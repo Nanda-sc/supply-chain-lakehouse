@@ -9,8 +9,6 @@ from config.settings import (
     GOLD_DELIVERY_PERFORMANCE,
     GOLD_SUPPLIER_PERFORMANCE,
     GOLD_SHIPPING_ANALYSIS,
-    GOLD_FORECAST_RESULTS,
-    GOLD_FORECAST_ACCURACY,
 )
 
 
@@ -87,56 +85,6 @@ def get_shipping_mode_summary() -> pd.DataFrame:
         FROM read_parquet('{GOLD_SHIPPING_ANALYSIS}/*.parquet')
         GROUP BY shipping_mode
         ORDER BY late_rate_pct DESC
-    """).df()
-
-
-def get_forecast_results(market: str = None, category: str = None) -> pd.DataFrame:
-    """Weekly actuals + all model forecasts. Optionally filter by market/category."""
-    con    = get_connection()
-    where  = "WHERE 1=1"
-    params = []
-    if market:
-        where += " AND market = ?"
-        params.append(market)
-    if category:
-        where += " AND category_name = ?"
-        params.append(category)
-
-    return con.execute(
-        f"""
-        SELECT market, category_name, week, actual_quantity,
-               ma_4w, ma_8w, ma_12w, prophet_forecast, split
-        FROM read_parquet('{GOLD_FORECAST_RESULTS}/*.parquet')
-        {where}
-        ORDER BY market, category_name, week
-        """,
-        params if params else [],
-    ).df()
-
-
-def get_forecast_accuracy() -> pd.DataFrame:
-    con = get_connection()
-    return con.execute(f"""
-        SELECT market, category_name, model, rmse, mae, wmape, bias, n_weeks
-        FROM read_parquet('{GOLD_FORECAST_ACCURACY}/*.parquet')
-        ORDER BY market, category_name, model
-    """).df()
-
-
-def get_forecast_accuracy_summary() -> pd.DataFrame:
-    """Average KPIs per model across all market+category groups (NaN excluded)."""
-    con = get_connection()
-    return con.execute(f"""
-        SELECT
-            model,
-            ROUND(AVG(rmse)  FILTER (WHERE rmse  IS NOT NULL), 4) AS avg_rmse,
-            ROUND(AVG(mae)   FILTER (WHERE mae   IS NOT NULL), 4) AS avg_mae,
-            ROUND(AVG(wmape) FILTER (WHERE wmape IS NOT NULL), 4) AS avg_wmape,
-            ROUND(AVG(bias)  FILTER (WHERE bias  IS NOT NULL), 4) AS avg_bias,
-            SUM(n_weeks)                                           AS total_test_weeks
-        FROM read_parquet('{GOLD_FORECAST_ACCURACY}/*.parquet')
-        GROUP BY model
-        ORDER BY avg_wmape
     """).df()
 
 
